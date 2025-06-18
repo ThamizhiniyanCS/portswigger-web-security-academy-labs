@@ -36,3 +36,8 @@
 ### Copying text to clipboard
 
 - [https://docs.rs/arboard/latest/arboard/struct.Clipboard.html#method.set_text](https://docs.rs/arboard/latest/arboard/struct.Clipboard.html#method.set_text)
+
+### Concurrency/Threading stuff
+
+- [https://doc.rust-lang.org/book/ch16-01-threads.html](https://doc.rust-lang.org/book/ch16-01-threads.html)
+- [https://doc.rust-lang.org/book/ch16-03-shared-state.html](https://doc.rust-lang.org/book/ch16-03-shared-state.html)
