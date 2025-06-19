@@ -2,8 +2,7 @@ use arboard::Clipboard;
 use clap::Parser;
 use reqwest::blocking::{Client, ClientBuilder};
 use scraper::{Html, Selector};
-use std::sync::LazyLock;
-use std::time::Duration;
+use std::{sync::LazyLock, time::Duration};
 use url::Url;
 
 pub static USERNAME: &str = "wiener";
