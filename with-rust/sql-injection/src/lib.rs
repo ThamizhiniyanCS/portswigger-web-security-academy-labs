@@ -1,4 +1,5 @@
 use clap::Parser;
+use regex::Regex;
 use reqwest::blocking::{Client, ClientBuilder};
 use scraper::{Html, Selector};
 use std::{sync::LazyLock, time::Duration};
@@ -15,6 +16,11 @@ pub static HTTP_CLIENT: LazyLock<Client> = LazyLock::new(|| {
         .expect("[-] Failed to generate reqwest blocking client")
 });
 
+pub static LAB_IS_SOLVED_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"Congratulations, you solved the lab!")
+        .expect("[-] Failed to generate LAB_IS_SOLVED_REGEX")
+});
+
 #[derive(Parser, Debug)]
 pub struct Args {
     /// Your Lab Instance URL is Required
@@ -23,7 +29,7 @@ pub struct Args {
 }
 
 fn parse_url(s: &str) -> Result<Url, String> {
-    Url::parse(s).map_err(|e| format!("[-] Invalid URL: {}", e))
+    Url::parse(s).map_err(|e| logger::error_return(format!("[-] Invalid URL: {}", e).as_ref()))
 }
 
 pub fn generate_clap_parser() -> Args {
@@ -41,5 +47,25 @@ pub fn get_csrf_token(body: &str, selector: &Selector) -> String {
         .next()
         .and_then(|element_ref| element_ref.attr("value"))
         .map(|v| v.to_string())
-        .expect("[-] CSRF Token Not Found")
+        .unwrap_or_else(|| logger::error_return("CSRF Token Not Found"))
+}
+
+pub fn check_is_lab_solved(lab_url: &str) {
+    logger::info("Checking whether the lab is solved or not...");
+
+    let response = HTTP_CLIENT
+        .get(lab_url)
+        .send()
+        .expect("[-] Failed to fetch the lab page");
+
+    if LAB_IS_SOLVED_REGEX.is_match(
+        response
+            .text()
+            .expect("[-] Failed to extract response")
+            .as_ref(),
+    ) {
+        logger::success("Lab is solved successfully")
+    } else {
+        logger::error("Lab is not yet solved")
+    }
 }

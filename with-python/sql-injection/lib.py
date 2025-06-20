@@ -23,3 +23,12 @@ def get_csrf_token(body: str, xpath: str) -> str:
     tree = html.fromstring(body)
 
     return tree.xpath(xpath)[0]
+
+
+def check_is_lab_solved(lab_url: str):
+    print("[+] Checking whether the lab is solved or not...")
+
+    if "Congratulations, you solved the lab!" in SESSION.get(lab_url).text:
+        print("[+] Lab is solved Successfully")
+    else:
+        print("[-] Lab is not solved yet")

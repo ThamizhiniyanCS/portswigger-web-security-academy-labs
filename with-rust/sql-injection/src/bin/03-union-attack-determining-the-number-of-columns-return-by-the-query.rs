@@ -1,4 +1,4 @@
-use sql_injection::{HTTP_CLIENT, generate_clap_parser};
+use sql_injection::{HTTP_CLIENT, check_is_lab_solved, generate_clap_parser};
 use std::iter::repeat_n;
 
 fn main() {
@@ -71,5 +71,5 @@ fn main() {
         columns
     );
 
-    println!("[+] The lab is solved. Check the lab page");
+    check_is_lab_solved(lab_url);
 }

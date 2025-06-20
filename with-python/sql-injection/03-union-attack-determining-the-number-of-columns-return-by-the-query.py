@@ -1,4 +1,4 @@
-from lib import SESSION, generate_parser
+from lib import SESSION, generate_parser, check_is_lab_solved
 
 if __name__ == "__main__":
     args = generate_parser()
@@ -40,7 +40,6 @@ if __name__ == "__main__":
         else:
             columns += 1
 
-    print(f"[+] The number of columns is {columns}")
     print(f"[+] The number of columns found using UNION SELECT is {columns}")
 
-    print("[+] The lab is solved. Check the lab page")
+    check_is_lab_solved(lab_url)
