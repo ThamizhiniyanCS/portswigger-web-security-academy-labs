@@ -118,7 +118,7 @@ fn main() {
     if HTTP_CLIENT
         .get(format!("{}/filter?category={}", lab_url, query))
         .send()
-        .expect("[-] ")
+        .expect("[-] Failed to query the target string")
         .status()
         == 200
     {

