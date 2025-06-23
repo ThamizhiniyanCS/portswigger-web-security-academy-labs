@@ -2,6 +2,7 @@ import requests
 import argparse
 from lxml import html
 import re
+from typing import List, Tuple
 
 
 # Creating a Session Object
@@ -111,3 +112,23 @@ def find_columns_of_type_string(
     )
 
     return target_columns
+
+
+def print_table(column_names: List[str], rows: List[Tuple[str, ...]]) -> None:
+    columns_width = max(len(cell) for row in rows for cell in row)
+    divider = "|-" + "-|-".join(["-" * columns_width] * len(column_names)) + "-|"
+
+    print(divider)
+    print(
+        "| "
+        + " | ".join(map(lambda col: col.center(columns_width, " "), column_names))
+        + " |"
+    )
+    print(divider)
+
+    for row in rows:
+        print(
+            "| " + " | ".join([cell.center(columns_width, " ") for cell in row]) + " |"
+        )
+
+    print(divider)
