@@ -194,3 +194,43 @@ pub fn check_is_lab_solved(lab_url: &str) {
         logger::error("Lab is not yet solved")
     }
 }
+
+pub fn print_tables(column_names: Vec<&str>, rows: Vec<Vec<String>>) {
+    let columns_width = rows
+        .iter()
+        .flat_map(|row| row.iter().map(|s| s.len()))
+        .max()
+        .expect("[-] rows must contain at least one cell");
+
+    let divider = format!(
+        "|-{}-|",
+        column_names
+            .iter()
+            .map(|_| "-".repeat(columns_width))
+            .collect::<Vec<_>>()
+            .join("-|-")
+    );
+
+    println!("{}", divider);
+    println!(
+        "| {} |",
+        column_names
+            .iter()
+            .map(|col| format!("{:^width$}", col, width = columns_width))
+            .collect::<Vec<_>>()
+            .join(" | ")
+    );
+    println!("{}", divider);
+
+    for row in rows {
+        println!(
+            "| {} |",
+            row.iter()
+                .map(|col| format!("{:^width$}", col, width = columns_width))
+                .collect::<Vec<_>>()
+                .join(" | ")
+        );
+    }
+
+    println!("{}", divider);
+}
