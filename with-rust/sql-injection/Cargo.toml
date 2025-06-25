@@ -10,3 +10,4 @@ url = "2.5.4"
 scraper = "0.23.1"
 regex = "1.11.1"
 logger = { path = "../logger" }
+rayon = "1.10.0"
