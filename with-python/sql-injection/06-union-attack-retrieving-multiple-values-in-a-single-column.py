@@ -1,8 +1,7 @@
 from lib import (
     SESSION,
-    LOGIN_CSRF_XPATH,
+    login_as_administrator,
     generate_parser,
-    get_csrf_token,
     find_no_of_columns,
     find_columns_of_type_string,
     check_is_lab_solved,
@@ -53,30 +52,12 @@ if __name__ == "__main__":
         print()
 
         if users_dict.get("administrator"):
-            print("[+] Now logging in as administrator")
+            administrator_password = users_dict.get("administrator")
 
-            # Extracting the login form csrf token using xpath
-            login_csrf_token = get_csrf_token(
-                # Fetching the login page to get the login page csrf token and parsing it with lxml to generate a tree
-                SESSION.get(url=f"{lab_url}/login").text,
-                LOGIN_CSRF_XPATH,
-            )
-            print(f"[+] Login CSRF Token: {login_csrf_token}")
-
-            if (
-                SESSION.post(
-                    url=f"{lab_url}/login",
-                    data={
-                        "username": "administrator",
-                        "password": users_dict.get("administrator"),
-                        "csrf": login_csrf_token,
-                    },
-                ).status_code
-                == 200
-            ):
-                print("[+] Logged in as administrator successfully")
+            if administrator_password:
+                login_as_administrator(lab_url, administrator_password)
             else:
-                print("[-] Failed to login as administrator")
+                print("[-] administrator credential not found in the dict")
                 exit()
 
         else:

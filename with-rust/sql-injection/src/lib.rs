@@ -234,3 +234,57 @@ pub fn print_tables(column_names: Vec<&str>, rows: Vec<Vec<String>>) {
 
     println!("{}", divider);
 }
+
+pub fn login_as_administrator(lab_url: &str, password: String) {
+    logger::info("Now logging in as administrator");
+    logger::info("Getting the login page CSRF TOKEN");
+
+    // Making a GET request to the login page
+    let response = HTTP_CLIENT
+        .get(format!("{lab_url}/login"))
+        .send()
+        .expect("[-] Failed to fetch the login page");
+
+    let login_page_csrf_token = get_csrf_token(
+        response
+            .text()
+            .expect("[-] Failed to extract login page body")
+            .as_str(),
+        &LOGIN_CSRF_TOKEN_SELECTOR,
+    );
+
+    logger::success(format!("Login Page CSRF Token: {}", login_page_csrf_token).as_ref());
+    logger::info("Performing the login bypass");
+
+    let response = HTTP_CLIENT
+        .post(format!("{}/login", lab_url))
+        .form(&[
+            ("csrf", login_page_csrf_token),
+            ("username", "administrator".to_string()),
+            ("password", password),
+        ])
+        .send()
+        .expect("[-] Failed to login as administrator");
+
+    if response.status() == 200 {
+        if response
+            .text()
+            .expect("[-] Failed to extract text from response")
+            .contains("Your username is: administrator")
+        {
+            logger::success("Login succesfully as administrator");
+        } else {
+            panic!(
+                "{}",
+                logger::error_return(
+                    "Failed to login as administrator; Probably password is wrong"
+                )
+            )
+        }
+    } else {
+        panic!(
+            "{}",
+            logger::error_return("Failed to login as administrator")
+        )
+    }
+}

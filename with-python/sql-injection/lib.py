@@ -132,3 +132,35 @@ def print_table(column_names: List[str], rows: List[Tuple[str, ...]]) -> None:
         )
 
     print(divider)
+
+
+def login_as_administrator(lab_url: str, password: str):
+    print("[+] Now logging in as administrator")
+
+    # Extracting the login form csrf token using xpath
+    login_csrf_token = get_csrf_token(
+        # Fetching the login page to get the login page csrf token and parsing it with lxml to generate a tree
+        SESSION.get(url=f"{lab_url}/login").text,
+        LOGIN_CSRF_XPATH,
+    )
+    print(f"[+] Login CSRF Token: {login_csrf_token}")
+
+    response = SESSION.post(
+        url=f"{lab_url}/login",
+        data={
+            "username": "administrator",
+            "password": password,
+            "csrf": login_csrf_token,
+        },
+    )
+
+    if response.status_code == 200:
+        if "Your username is: administrator" in response.text:
+            print("[+] Logged in as administrator successfully")
+        else:
+            print("[-] Failed to login as administrator; Probably password is wrong")
+            exit()
+
+    else:
+        print("[-] Failed to login as administrator")
+        exit()

