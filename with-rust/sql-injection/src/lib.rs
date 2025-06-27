@@ -3,7 +3,7 @@ use regex::Regex;
 use reqwest::blocking::{Client, ClientBuilder};
 use scraper::{Html, Selector};
 use std::iter::repeat_n;
-use std::{sync::LazyLock, time::Duration};
+use std::sync::LazyLock;
 use url::Url;
 
 static TRACKING_ID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
@@ -15,7 +15,6 @@ pub static LOGIN_CSRF_TOKEN_SELECTOR: LazyLock<Selector> =
 
 pub static HTTP_CLIENT: LazyLock<Client> = LazyLock::new(|| {
     ClientBuilder::new()
-        .timeout(Duration::from_secs(10))
         .cookie_store(true)
         .build()
         .expect("[-] Failed to generate reqwest blocking client")
@@ -283,7 +282,7 @@ pub fn login_as_administrator(lab_url: &str, password: String) {
     );
 
     logger::success(format!("Login Page CSRF Token: {}", login_page_csrf_token).as_ref());
-    logger::info("Performing the login bypass");
+    logger::info("Attempting to login as `administrator");
 
     let response = HTTP_CLIENT
         .post(format!("{}/login", lab_url))

