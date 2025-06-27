@@ -3,8 +3,8 @@ from lib import (
     check_is_lab_solved,
     generate_parser,
     login_as_administrator,
+    get_tracking_id,
 )
-import re
 from string import ascii_lowercase, digits
 from multiprocessing import Pool
 
@@ -38,22 +38,7 @@ if __name__ == "__main__":
 
     lab_url = args.lab_url.strip("/")
 
-    tracking_id = ""
-
-    print("[!] Fetching the Tracking ID")
-
-    get_set_cookie = SESSION.get(lab_url).headers.get("Set-Cookie")
-
-    if get_set_cookie:
-        match = re.search(r"TrackingId=(.+?);", get_set_cookie)
-        if match:
-            tracking_id = match.group(1)
-
-    if not tracking_id:
-        print("[-] Failed to get tracking_id")
-        exit()
-
-    print(f"[+] Got the Tracking ID: {tracking_id}")
+    tracking_id = get_tracking_id(lab_url)
 
     print("[!] Now brute-forcing the `administrator` password")
 

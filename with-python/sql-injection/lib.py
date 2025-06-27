@@ -134,6 +134,26 @@ def print_table(column_names: List[str], rows: List[Tuple[str, ...]]) -> None:
     print(divider)
 
 
+def get_tracking_id(lab_url: str) -> str:
+    tracking_id = ""
+
+    print("[!] Fetching the Tracking ID")
+
+    get_set_cookie = SESSION.get(lab_url).headers.get("Set-Cookie")
+
+    if get_set_cookie:
+        match = re.search(r"TrackingId=(.+?);", get_set_cookie)
+        if match:
+            tracking_id = match.group(1)
+
+    if not tracking_id:
+        print("[-] Failed to get tracking_id")
+        exit()
+
+    print(f"[+] Got the Tracking ID: {tracking_id}")
+    return tracking_id
+
+
 def login_as_administrator(lab_url: str, password: str):
     print("[+] Now logging in as administrator")
 
