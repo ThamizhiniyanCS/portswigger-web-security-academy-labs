@@ -64,8 +64,6 @@ if __name__ == "__main__":
 
     print(f"[+] Found the `administrator` password: {administrator_password}")
 
-    exit()
-
     login_as_administrator(lab_url, administrator_password)
 
     check_is_lab_solved(lab_url)

@@ -35,6 +35,10 @@ pub struct Args {
     /// Your Lab Instance URL is Required
     #[arg(short, long, value_parser = parse_url)]
     pub lab_url: Url,
+
+    /// Burp Collaborator Domain
+    #[arg(short, long)]
+    pub collaborator_domain: Option<String>,
 }
 
 fn parse_url(s: &str) -> Result<Url, String> {

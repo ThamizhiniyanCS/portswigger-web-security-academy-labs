@@ -17,6 +17,9 @@ def generate_parser() -> argparse.Namespace:
     parser.add_argument(
         "-u", "--lab-url", help="Your lab instance URL is required", required=True
     )
+    parser.add_argument(
+        "-c", "--collaborator-domain", help="Burp Collaborator Domain", required=False
+    )
 
     return parser.parse_args()
 
