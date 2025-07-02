@@ -286,7 +286,7 @@ pub fn login_as_administrator(lab_url: &str, password: String) {
     );
 
     logger::success(format!("Login Page CSRF Token: {}", login_page_csrf_token).as_ref());
-    logger::info("Attempting to login as `administrator");
+    logger::info("Attempting to login as `administrator`");
 
     let response = HTTP_CLIENT
         .post(format!("{}/login", lab_url))
