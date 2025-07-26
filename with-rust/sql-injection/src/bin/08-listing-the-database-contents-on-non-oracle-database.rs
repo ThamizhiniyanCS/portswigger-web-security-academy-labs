@@ -30,9 +30,9 @@ fn main() {
     let mut password_column_name: Option<String> = None;
     let mut administrator_password: Option<String> = None;
 
-    let columns = find_no_of_columns(&lab_url_with_endpoint, Some("-- -"));
+    let columns = find_no_of_columns(&lab_url_with_endpoint, Some("-- -"), None);
 
-    find_columns_of_type_string(&lab_url_with_endpoint, columns, Some("-- -"));
+    find_columns_of_type_string(&lab_url_with_endpoint, columns, Some("-- -"), None);
 
     logger::info("Finding the users table name");
     logger::info("Fetching the information_schema.tables");

@@ -11,9 +11,9 @@ fn main() {
 
     let target_string = fetch_target_string(lab_url, None);
 
-    let columns = find_no_of_columns(&lab_url_with_endpoint, None);
+    let columns = find_no_of_columns(&lab_url_with_endpoint, None, None);
 
-    let target_columns = find_columns_of_type_string(&lab_url_with_endpoint, columns, None);
+    let target_columns = find_columns_of_type_string(&lab_url_with_endpoint, columns, None, None);
 
     logger::info("Querying the target string...");
 

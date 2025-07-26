@@ -20,9 +20,9 @@ fn main() {
 
     let lab_url_with_endpoint = format!("{lab_url}/filter?category=");
 
-    let columns = find_no_of_columns(&lab_url_with_endpoint, None);
+    let columns = find_no_of_columns(&lab_url_with_endpoint, None, None);
 
-    find_columns_of_type_string(&lab_url_with_endpoint, columns, None);
+    find_columns_of_type_string(&lab_url_with_endpoint, columns, None, None);
 
     logger::info("Fetching the `username` and `password` columns from `users` table");
     logger::info(

