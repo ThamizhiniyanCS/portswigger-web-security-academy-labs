@@ -1,0 +1,12 @@
+[package]
+name = "server_side_file_upload_vulnerabilities"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+arboard = "3.5.0"
+clap = { workspace = true, features = ["derive"] }
+regex = { workspace = true }
+reqwest = { workspace = true, features = ["blocking", "multipart", "cookies"] }
+scraper = { workspace = true }
+url = { workspace = true }

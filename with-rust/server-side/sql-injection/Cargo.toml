@@ -1,0 +1,14 @@
+[package]
+name = "server-side_sql-injection"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+reqwest = { workspace = true, features = ["blocking", "cookies"] }
+clap = { workspace = true, features = ["derive"] }
+url = { workspace = true }
+scraper = { workspace = true }
+regex = { workspace = true }
+logger = { workspace = true }
+rayon = { workspace = true }
+urlencoding = { version = "2.1.3" }

@@ -1,6 +1,10 @@
 import requests
 import argparse
 
+# Creating a Session Object
+# https://docs.python-requests.org/en/latest/api/#request-sessions
+SESSION = requests.session()
+
 
 def generate_parser() -> argparse.Namespace:
     parser = argparse.ArgumentParser(

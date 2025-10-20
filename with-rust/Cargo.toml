@@ -1,0 +1,16 @@
+[workspace]
+resolver = "3"
+members = ["logger", "server-side/*"]
+
+[workspace.dependencies]
+clap = { version = "4.5.49", features = ["derive"] }
+regex = "1.12.2"
+reqwest = { version = "0.12.24", features = [
+  "blocking",
+  "multipart",
+  "cookies",
+] }
+logger = { path = "./logger/" }
+scraper = "0.24.0"
+url = "2.5.7"
+rayon = { version = "1.11.0" }

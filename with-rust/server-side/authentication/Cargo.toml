@@ -1,0 +1,11 @@
+[package]
+name = "server-side_authentication"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+reqwest = { workspace = true, features = ["blocking"] }
+clap = { workspace = true, features = ["derive"] }
+url = { workspace = true }
+logger = { workspace = true }
+rayon = { workspace = true }
